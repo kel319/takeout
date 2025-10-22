@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  new-student-app:
+    build: .
+    container_name: new-student-app
+    ports:
+      - "9090:9090"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/student?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}  # ✅ 使用环境变量
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - SPRING_DATA_REDIS_PASSWORD=${SPRING_DATA_REDIS_PASSWORD}       # ✅ 使用环境变量
+      - SECURITY_JWT_SECRET_KEY=${SECURITY_JWT_SECRET_KEY}         # ✅ 使用环境变量
+      - SERVER_PORT=9090
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=${SPRING_RABBITMQ_USERNAME}
+      - SPRING_RABBITMQ_PASSWORD=${SPRING_RABBITMQ_PASSWORD}
+    env_file:
+      - .env  # ✅ 从.env文件加载环境变量
+    depends_on:
+      - mysql
+      - redis
+      - rabbitmq
+    networks:
+      - new-student-network
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+
+  mysql:
+    image: mysql:8.0
+    container_name: new-student-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${SPRING_DATASOURCE_PASSWORD}  # ✅ 使用环境变量
+      - MYSQL_DATABASE=student
+    env_file:
+      - .env  # ✅ 从.env文件加载环境变量
+    ports:
+      - "3308:3306"
+    volumes:
+      - new-mysql-data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - new-student-network
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+
+  redis:
+    image: redis:7.0
+    container_name: new-student-redis
+    command: redis-server --requirepass ${SPRING_DATA_REDIS_PASSWORD}  # ✅ 使用环境变量
+    env_file:
+      - .env  # ✅ 从.env文件加载环境变量
+    ports:
+      - "6380:6379"
+    volumes:
+      - new-redis-data:/data
+    networks:
+      - new-student-network
+    restart: unless-stopped
+  rabbitmq:
+    image: rabbitmq:3.13.0-management
+    container_name: new-student-rabbitmq
+    networks:
+      - new-student-network
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin  # ✅ 使用环境变量
+      - RABBITMQ_DEFAULT_PASS=123456
+    ports:
+      - "5672:5672"   # AMQP 协议端口
+      - "15672:15672" # 管理界面端口
+    volumes:
+      - new-rabbitmq-data:/var/lib/rabbitmq
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+
+volumes:
+  new-mysql-data:
+    driver: local
+  new-redis-data:
+    driver: local
+  new-rabbitmq-data:
+    driver: local
+
+networks:
+  new-student-network:
+    driver: bridge

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 替换为实际Mapper接口全路径 -->
+<mapper namespace="com.wyk.student.mapper.DishMapper">
+    <insert id="insertByDishEntity">
+        insert into dish
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            create_time,
+            update_time,
+            create_by,
+            update_by,
+            <if test="dish.name != null and !dish.name.trim().isEmpty()">name,</if>
+            <if test="dish.price != null">price,</if>
+            <if test="dish.img != null and !dish.img.trim().isEmpty()">img,</if>
+            <if test="dish.status != null">status,</if>
+        </trim>
+        values
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            #{dish.createTime},
+            #{dish.updateTime},
+            #{dish.createBy},
+            #{dish.updateBy},
+            <if test="dish.name != null and !dish.name.trim().isEmpty()">#{dish.name},</if>
+            <if test="dish.price != null">#{dish.price},</if>
+            <if test="dish.img != null and !dish.img.trim().isEmpty()">#{dish.img},</if>
+            <if test="dish.status != null">#{dish.status},</if>
+        </trim>
+    </insert>
+
+    <update id="updateDishById">
+        update dish 
+        <set>
+            update_by = #{dish.updateBy},
+            update_time = #{dish.updateTime},
+            <if test="dish.inv != null">inv = #{dish.inv},</if>
+            <if test="dish.price != null">price = #{dish.price},</if>
+            <if test="dish.img != null and !dish.img.trim().isEmpty()">img = #{dish.img},</if>
+            <if test="dish.status != null">status = #{dish.status},</if>
+        </set>
+        <where>
+            <if test="dish.id != null">id = #{dish.id}</if>
+            <if test="dish.id == null">1 = 0</if>
+        </where>
+    </update>
+    <update id="invDeductByKeysAndArgs">
+        update dish
+        set inv = case id
+            <foreach collection="keys" item="key" index="index">
+                when #{key} then #{args[${index}]}
+            </foreach>
+            else inv
+        end
+        <where>
+            id in
+            <foreach collection="keys" item="key" open="(" separator="," close=")">
+                #{key}
+            </foreach>
+        </where>
+
+    </update>
+    <select id="selectDishVoByRequest" resultType="com.wyk.student.domain.vo.DishVo">
+        select id,name,price,inv,img,status,create_by from dish
+        <where>
+            <if test="request.createBy != null">create_by = #{request.createBy}</if>
+            <if test="request.name != null and !request.name.trim().isEmpty()">name like concat(#{request.name},'%')</if>
+            <if test="request.status != null">and status = #{request.status}</if>
+            <choose>
+                <when test="request.inv != null and request.inv &gt; 0">and inv &gt;= 0</when>
+                <when test="request.inv != null and request.inv eq 0">and inv = 0</when>
+                <when test="request.inv != null and request.inv &lt; 0">and inv = -1</when>
+            </choose>
+            <if test="request.priceMax != null and request.priceMin != null">
+                and price between #{request.priceMin} and #{request.priceMax} </if>
+            <if test="request.priceMax != null and request.priceMin == null">and price &lt;= #{request.priceMax}</if>
+            <if test="request.priceMin != null and request.priceMax == null">and price &gt;= #{request.priceMin}</if>
+        </where>
+    </select>
+    <select id="selectDishByComboId" resultType="com.wyk.student.domain.vo.GoodsVo">
+        select cd.dish_id as goodsId,
+            d.name as goodsName,
+            cd.quantity as quantity,
+            sum(cd.quantity * d.price) as price
+        from combo_dish as cd
+        join dish as d on cd.dish_id = d.id
+        join combo as c on cd.combo_id = c.id
+        where cd.combo_id = #{comboId}
+        group by cd.dish_id,d.name,cd.quantity
+    </select>
+
+
+</mapper>

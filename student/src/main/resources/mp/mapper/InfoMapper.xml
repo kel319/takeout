@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 替换为实际Mapper接口全路径 -->
+<mapper namespace="com.wyk.student.mapper.InfoMapper">
+
+    <update id="updateByUserId" >
+        update info 
+        <set>
+            <if test="infoEntity.gender != null">gender = #{infoEntity.gender}</if>
+            <if test="infoEntity.email != null">,email = #{infoEntity.email}</if>
+            <if test="infoEntity.phone != null">,phone = #{infoEntity.phone}</if>
+            ,update_time = #{infoEntity.updateTime}
+        </set>
+        <where>
+            <if test="infoEntity.userId != null">user_id = #{infoEntity.userId}</if>
+            <if test="infoEntity.userId == null">1=0</if>
+        </where>
+    </update>
+</mapper>

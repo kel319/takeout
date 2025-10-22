@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  # MySQL 服务
+  mysql-db:
+    image: mysql:8.0
+    container_name: student-mysql-new
+    networks:
+      - student-network
+    environment:
+      MYSQL_ROOT_PASSWORD: h8264063
+      MYSQL_DATABASE: student
+      TZ: Asia/Shanghai
+    ports:
+      - "3308:3306"
+    volumes:
+      - student-mysql-data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql  # 修正这里
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Redis 服务（保持不变）
+  redis:
+    image: redis:7.0
+    container_name: student-redis-new
+    networks:
+      - student-network
+    ports:
+      - "6380:6379"
+    volumes:
+      - student-redis-data:/data
+    command: redis-server --requirepass 123456
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      timeout: 10s
+      retries: 5
+
+  # RabbitMQ 服务（保持不变）
+  rabbitmq:
+    image: rabbitmq:3.13.0-management
+    container_name: student-rabbitmq-new
+    networks:
+      - student-network
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: 123456
+      TZ: Asia/Shanghai
+    ports:
+      - "5672:5672"   # AMQP 协议端口
+      - "15672:15672" # 管理界面端口
+    volumes:
+      - student-rabbitmq-data:/var/lib/rabbitmq
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      timeout: 20s
+      retries: 10
+
+  # 您的 Java 应用（保持不变）
+  student-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: student-service
+    networks:
+      - student-network
+    ports:
+      - "9090:9090"
+    environment:
+      # 数据库配置
+      SPRING_DATASOURCE_HOST: mysql-db
+      SPRING_DATASOURCE_PORT: 3306
+      SPRING_DATASOURCE_DATABASE: student
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: h8264063
+      # Redis配置
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: 123456
+      # RabbitMQ配置
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: 123456
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  student-network:
+    driver: bridge
+
+volumes:
+  student-mysql-data:
+  student-redis-data:
+  student-rabbitmq-data
