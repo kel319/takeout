@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 替换为实际Mapper接口全路径 -->
+<mapper namespace="com.wyk.student.mapper.ShopCartMapper">
+    
+    <select id="selectGoodsByIds" resultType="com.wyk.student.domain.vo.GoodsVo">
+        select
+            s.user_id as userId,
+            s.goods_id as goodsId,
+            s.quantity as quantity,
+            s.goods_type as goods_type,
+            case
+                when s.goods_type = 0 then d.name
+                when s.goods_type = 1 then c.name
+            end as goodsName,
+            sum(case
+                    when s.goods_type = 0 then d.price * s.quantity
+                    when s.goods_type = 1 then c.price * s.quantity
+                end
+        ) as price
+        from shop_cart as s
+        left join dish as d on s.goods_id = d.id
+        left join combo as c on s.goods_id = c.id
+        <where>
+            s.user_id in
+            <foreach collection="userIds" item="userId" close=")" open="(" separator=",">
+                #{userId}
+            </foreach>
+        </where>
+        group by s.user_id, s.goods_id, s.goods_type, goodsName,s.quantity
+    </select>
+</mapper>

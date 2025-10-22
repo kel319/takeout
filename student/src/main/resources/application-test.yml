@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    #  serverTimezone=UTC 设置时区，避免时区错误
+    url: jdbc:mysql://${SPRING_HOST:localhost}:${SPRING_PORT:3306}/${SPRING_DATABASE:my_student}?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+    # 数据库用户名
+    username: ${SPRING_DATABASE_USERNAME:student}
+    # 数据库密码
+    password: ${SPRING_DATABASE_PASSWORD:y8264063}

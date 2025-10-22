@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 替换为实际Mapper接口全路径 -->
+<mapper namespace="com.wyk.student.mapper.ComboMapper">
+    <insert id="insertComboAndDish">
+        insert into combo_dish(combo_id,dish_id,quantity)
+        values
+        <foreach collection="request.comboDishes" item="comboDish" separator=",">
+            (#{request.id},#{comboDish.dishId},#{comboDish.count})
+        </foreach>
+    </insert>
+    <insert id="insertCombo">
+        insert into combo (name,price,status,create_by,create_time,update_by,update_time)
+        values (#{comboEntity.name},#{comboEntity.price},#{comboEntity.status},
+        #{comboEntity.createBy},#{comboEntity.createTime},#{comboEntity.updateBy},#{comboEntity.updateTime})
+    </insert>
+    <update id="updateCombo">
+        update combo
+        <set>
+            update_by = #{comboEntity.updateBy},update_time = #{comboEntity.updateTime}
+            <if test="comboEntity.name != null and !comboEntity.name.trim().empty()">name = #{comboEntity.name},</if>
+            <if test="comboEntity.price != null">price = #{comboEntity.price},</if>
+            <if test="comboEntity.status != null">status = #{comboEntity.status},</if>
+        </set>
+        <where>
+            <choose>
+                <when test="comboEntity.id != null">id = #{comboEntity.id}</when>
+                <otherwise>0 = 1</otherwise>
+            </choose>
+        </where>
+    </update>
+    <delete id="deleteComboDishByComboId">
+        delete from combo_dish
+        <where>
+            <choose>
+                <when test="comboId != null and comboId &gt; 0">combo_id = #{comboId}</when>
+                <otherwise>1 = 0</otherwise>
+            </choose>
+        </where>
+    </delete>
+
+    <select id="selectComboDishByComboId" resultType="com.wyk.student.domain.vo.ComboDishVo">
+        select d.id as id,
+        d.name as name,
+        d.price as price,
+        d.inv as inv,
+        d.img as img,
+        cd.quantity as count,
+        cd.combo_id as comboId
+        from combo_dish as cd
+        join dish as d on cd.dish_id = d.id
+        <where>
+            <if test="comboIds != null and !comboIds.isEmpty()">
+                cd.combo_id in
+                <foreach collection="comboIds" item="comboId" open="(" separator="," close=")">
+                    #{comboId}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+</mapper>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 替换为实际Mapper接口全路径 -->
+<mapper namespace="com.wyk.student.mapper.UserMapper">
+    <update id="logicDeleteById">
+        update user set deleted = 1
+        <where>
+            id in
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </where>
+    </update>
+    <select id="selectUserWithInfo" resultType="com.wyk.student.domain.vo.UserVo">
+        select user.id as id,
+        user.name as name,
+        user.username as username,
+        info.gender as gender,
+        info.email as email,
+        info.phone as phone
+        from user join info on user.id = info.user_id
+        <where>
+            <if test="ids != null and ids.size() > 0">
+                user.id in
+                <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                    #{id}
+                </foreach>
+            </if>
+            user.deleted = 0
+        </where>
+    </select>
+    <select id="selectByUserInfo" resultType="com.wyk.student.domain.vo.UserVo">
+        select user.id as id,
+        user.name as name,
+        user.username as username,
+        info.gender as gender,
+        info.email as email,
+        info.phone as phone
+        from user
+        join info on user.id = info.user_id
+        <where>
+            user.deleted = 0
+            <if test="request.username != null and !request.username.trim().isEmpty">and user.username = #{request.username}</if>
+            <if test="request.name != null and !request.name.trim().isEmpty">and user.name = #{request.name}</if>
+            <if test="request.gender != null">and info.gender = #{request.gender}</if>
+            <if test="request.email != null and !request.email.trim().isEmpty">and info.email = #{request.email}</if>
+            <if test="request.phone != null and !request.phone.trim().isEmpty">and info.phone = #{request.phone}</if>
+        </where>
+    </select>
+</mapper>

@@ -1,0 +1,140 @@
+server:
+  port: ${SERVER_PORT:9090}
+spring:
+  application:
+    name: student
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  datasource:
+    # 数据库连接 URL
+    #  useSSL=false&allowPublicKeyRetrieval=true 常用于解决旧版本连接问题
+#    #  serverTimezone=UTC 设置时区，避免时区错误
+#    url: jdbc:mysql://${SPRING_HOST:localhost}:${SPRING_PORT:3306}/${SPRING_DATABASE:my_student}?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+#    # 数据库用户名
+#    username: ${SPRING_DATABASE_USERNAME:student}
+#    # 数据库密码
+#    password: ${SPRING_DATABASE_PASSWORD:y8264063}
+    # 数据库驱动类名（Spring Boot 2.x+ 通常可以自动识别，但显式声明更安全）
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # hikari连接池
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  redis:
+    host: ${SPRING_DATA_REDIS_HOST:localhost}
+    port: ${SPRING_DATA_REDIS_PORT:6380}
+    password: ${SPRING_DATA_REDIS_PASSWORD:123456}
+    timeout: 2000ms
+    lettuce:
+      pool:
+        # 连接池最大连接数（使用负值表示没有限制）
+        max-active: 20
+        # 连接池最大阻塞等待时间（使用负值表示没有限制）
+        max-wait: 3s
+        # 连接池中的最大空闲连接
+        max-idle: 10
+        # 连接池中的最小空闲连接
+        min-idle: 2
+        # 连接空闲时间超过该值后，会被释放（单位：毫秒）
+        time-between-eviction-runs: 120s
+      shutdown-timeout: 100ms
+#  output:
+#    ansi-enabled: ALWAYS
+#  messages:
+#    encoding: UTF-8
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:gaohao}
+    password: ${SPRING_RABBITMQ_PASSWORD:123}
+    virtual-host: ${SPRING_RABBITMQ_VIRTUAL_HOST:/wyk}
+    # 开启发布确认
+    publisher-confirm-type: correlated
+    # 开启发布返回
+    publisher-returns: true
+    # 消费者手动确认
+    listener:
+      simple:
+        acknowledge-mode: manual
+        concurrency: 2        # 最小并发数
+        max-concurrency: 5    # 最大并发数
+        prefetch: 1           # 限流，避免消息堆积
+# MyBatis-plus 配置
+mybatis-plus:
+  #  mapper.xml 文件存放路径（如果使用 XML 方式）
+  mapper-locations: classpath:mp/mapper/*.xml
+  # 实体类包路径（用于别名，可选）
+  type-aliases-package: com.wyk.student.domain.entity
+  # 日志配置（打印 SQL 语句）
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+
+
+#knife4j配置
+knife4j:
+  #knife4j开关
+  enable: ${KNIFE4J_ENABLE:true}
+  # 生产环境屏蔽文档（建议生产环境设为true）
+  production: ${KNIFE4J_PRODUCTION:false}
+  # 基础认证配置
+  basic:
+    enable: ${KNIFE4J_BASIC_ENABLE:true}
+    username: ${KNIFE4J_BASIC_USERNAME:admin}
+    password: ${KNIFE4J_BASIC_PASSWORD:123456}
+  # 文档标题、描述等信息
+  setting:
+    # 文档标题
+    title: 学生管理系统API接口文档
+    # 文档描述
+    description: 基于Knife4j的API接口文档，包含所有业务接口
+    # 文档版本
+    version: 1.0.0
+    # 联系人信息
+    contact:
+      name: wyk个人开发
+      url: https://space.bilibili.com/72845268
+      email: 3198620494@qq.com
+
+  # 全局参数配置（如Token、Language等）
+  global-parameters:
+    - name: Authorization
+      description: 认证Token
+      value: Bearer {token}
+      type: string
+      # 参数位置：header/query/path/cookie
+      param-type: header
+      # 是否必须
+      required: true
+
+    - name: Language
+      description: 语言类型
+      value: zh-CN
+      type: string
+      param-type: header
+      required: false
+#
+## Swagger原生配置（可选）
+#springfox:
+#  documentation:
+#    swagger:
+#      v2:
+#        path: /api-docs  # API文档JSON数据路径
+#    # 接口扫描规则
+#    selectors:
+#      base-package: com.wyk.student.controller  # 扫描的控制器包路径
+
+
+security:
+  jwt:
+    secret-key: ${SECURITY_JWT_SECRET_KEY:VuJ2UCXC4jnqudr3Bu83bHg8t9TwDMvZaAjTozIXt7I=}
+    expiration: ${SECURITY_JWT_EXPIRATION:172800000}
+    issuer: ${SECURITY_JWT_ISSUER:wyk}
+    audience: ${SECURITY_JWT_AUDIENCE:wyk-user}
+
+snowflake:
+  node-id: ${SNOWFLAKE_NODE_ID:1}
